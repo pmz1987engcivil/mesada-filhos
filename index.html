@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D4E63">
+<title>Mesada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --mar: #1D4E63;
+    --mar-claro: #3A7A94;
+    --ceu: #EAF3F6;
+    --papel: #FFFFFF;
+    --tinta: #16303A;
+    --suave: #587280;
+    --linha: #D3E3E9;
+    --moeda: #F5BD2F;
+    --moeda-borda: #C98C0C;
+    --verde: #257A45;
+    --verde-fundo: #E2F3E8;
+    --vermelho: #C0362C;
+    --vermelho-fundo: #FBE6E3;
+    --azul: #2C5F9E;
+    --azul-fundo: #E5EDF8;
+    font-family: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--ceu); color: var(--tinta); }
+  body {
+    font-size: 18px; line-height: 1.35;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  [hidden] { display: none !important; }
+  button, input, select { font: inherit; }
+  button { cursor: pointer; border: 0; border-radius: 14px; padding: 12px 16px; font-weight: 700; }
+  :focus-visible { outline: 3px solid var(--moeda-borda); outline-offset: 2px; }
+
+  .tela { max-width: 540px; margin: 0 auto; padding: 16px 16px 64px; }
+  .btn { background: var(--mar); color: #fff; }
+  .btn-claro { background: var(--papel); color: var(--mar); border: 2px solid var(--linha); }
+  .btn-texto { background: none; color: var(--suave); padding: 8px; font-weight: 600; text-decoration: underline; }
+
+  .barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .barra h1 { margin: 0; font-size: 30px; font-weight: 800; color: var(--mar); }
+
+  /* A moeda: o elemento principal do app */
+  .moeda {
+    width: 200px; height: 200px; margin: 12px auto 20px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 28%, #FFE59A, var(--moeda) 55%, #E6A413);
+    border: 8px solid var(--moeda-borda);
+    box-shadow: inset 0 0 0 7px rgba(255,255,255,.35), 0 7px 0 var(--moeda-borda);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #573900; text-align: center;
+  }
+  .moeda span { font-size: 17px; font-weight: 600; }
+  .moeda strong { font-size: 38px; font-weight: 800; line-height: 1.05; }
+  .moeda.negativa {
+    background: radial-gradient(circle at 34% 28%, #FFD6D1, #F09A91 58%, #DC6D66);
+    border-color: var(--vermelho);
+    box-shadow: inset 0 0 0 7px rgba(255,255,255,.35), 0 7px 0 var(--vermelho);
+    color: #5E120C;
+  }
+  .moeda.logo { width: 96px; height: 96px; border-width: 5px; box-shadow: inset 0 0 0 4px rgba(255,255,255,.35), 0 5px 0 var(--moeda-borda); font-size: 32px; font-weight: 800; }
+
+  .avatar {
+    border-radius: 50%; object-fit: cover; flex: none;
+    background: var(--mar-claro); color: #fff; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  .seletor { display: flex; gap: 20px; justify-content: center; margin-top: 4px; }
+  .seletor button { background: none; padding: 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--suave); }
+  .seletor button[aria-pressed="true"] { color: var(--mar); }
+  .seletor button[aria-pressed="true"] .avatar { box-shadow: 0 0 0 4px var(--ceu), 0 0 0 8px var(--moeda); }
+
+  .banner { background: #FFF4D2; border: 2px solid var(--moeda); border-radius: 16px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .banner span { font-weight: 600; }
+
+  .abas { display: flex; gap: 4px; padding: 4px; margin: 16px 0; background: var(--papel); border: 2px solid var(--linha); border-radius: 16px; }
+  .abas button { flex: 1; background: none; color: var(--suave); padding: 10px 4px; font-size: 16px; }
+  .abas button[aria-selected="true"] { background: var(--mar); color: #fff; }
+
+  h2 { font-size: 21px; margin: 22px 0 8px; color: var(--mar); }
+  h3 { font-size: 19px; margin: 0; color: var(--mar); }
+
+  .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .regra { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px; min-height: 104px; font-size: 16px; font-weight: 600; line-height: 1.2; }
+  .regra .ic { font-size: 24px; }
+  .regra b { margin-top: auto; font-size: 18px; }
+  .regra.beneficio { background: var(--verde-fundo); color: #184F2D; }
+  .regra.multa { background: var(--vermelho-fundo); color: #6B1912; }
+
+  .cartao { background: var(--papel); border: 2px solid var(--linha); border-radius: 18px; padding: 16px; }
+  form.cartao { display: grid; gap: 12px; margin-top: 8px; }
+  label { display: grid; gap: 4px; font-size: 15px; font-weight: 600; color: var(--suave); }
+  input, select { width: 100%; padding: 11px 12px; border: 2px solid var(--linha); border-radius: 12px; background: #fff; color: var(--tinta); font-size: 18px; }
+  .dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tipo { display: flex; gap: 8px; }
+  .tipo label { flex: 1; display: block; }
+  .tipo input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .tipo span { display: block; text-align: center; padding: 10px; border-radius: 12px; border: 2px solid var(--linha); font-size: 17px; color: var(--suave); }
+  .tipo input:focus-visible + span { outline: 3px solid var(--moeda-borda); outline-offset: 2px; }
+  .tipo input[value="beneficio"]:checked + span { background: var(--verde-fundo); border-color: var(--verde); color: var(--verde); }
+  .tipo input[value="multa"]:checked + span { background: var(--vermelho-fundo); border-color: var(--vermelho); color: var(--vermelho); }
+  .nota { margin: 0; font-size: 15px; color: var(--suave); }
+
+  .mes { margin-top: 22px; }
+  .mes-resumo { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+  .chip { padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; }
+  .c-pos { background: var(--verde-fundo); color: var(--verde); }
+  .c-neg { background: var(--vermelho-fundo); color: var(--vermelho); }
+  .c-gasto { background: var(--azul-fundo); color: var(--azul); }
+  .item { display: flex; align-items: center; gap: 10px; background: var(--papel); border-radius: 14px; padding: 10px 12px; margin-bottom: 6px; }
+  .item .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 21px; flex: none; }
+  .ic-mesada { background: #FFF1C7; } .ic-beneficio { background: var(--verde-fundo); }
+  .ic-multa { background: var(--vermelho-fundo); } .ic-gasto { background: var(--azul-fundo); }
+  .item .txt { flex: 1; min-width: 0; font-weight: 600; line-height: 1.2; }
+  .item .txt small { display: block; margin-top: 2px; font-weight: 500; font-size: 14px; color: var(--suave); }
+  .item .val { font-weight: 800; white-space: nowrap; }
+  .pos { color: var(--verde); } .neg { color: var(--vermelho); } .gst { color: var(--azul); }
+  .apagar { background: none; color: var(--suave); padding: 6px 8px; font-size: 18px; }
+  .vazio { text-align: center; color: var(--suave); padding: 24px 8px; }
+
+  /* Entrada */
+  .entrar { text-align: center; padding-top: 40px; }
+  .entrar h1 { font-size: 40px; margin: 8px 0 0; color: var(--mar); font-weight: 800; }
+  .entrar > p { margin: 0 0 28px; color: var(--suave); }
+  .entrar .btn { width: 100%; font-size: 19px; padding: 14px; }
+  .entrar details { margin-top: 24px; text-align: left; }
+  .entrar summary { cursor: pointer; font-weight: 700; color: var(--mar); text-align: center; }
+
+  /* Escolha do filho */
+  .escolha { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 24px; }
+  .escolha button { background: var(--papel); border: 2px solid var(--linha); border-radius: 22px; padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 24px; color: var(--mar); }
+  .pergunta { text-align: center; font-size: 28px; font-weight: 800; color: var(--mar); margin: 32px 0 0; }
+
+  .ola { display: flex; align-items: center; gap: 12px; }
+  .ola strong { font-size: 26px; color: var(--mar); font-weight: 800; }
+  .recado { text-align: center; margin: -6px 0 0; font-weight: 600; color: var(--suave); }
+  .recado.neg { color: var(--vermelho); }
+
+  /* PIN */
+  .sobreposicao { position: fixed; inset: 0; background: rgba(22,48,58,.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .pin-caixa { background: var(--papel); border-radius: 26px; padding: 20px; width: 100%; max-width: 340px; text-align: center; }
+  .pontos { font-size: 30px; letter-spacing: 6px; min-height: 44px; color: var(--mar); }
+  .erro { color: var(--vermelho); min-height: 22px; margin: 0 0 8px; font-weight: 600; font-size: 16px; }
+  .teclado { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .teclado button { background: var(--ceu); color: var(--mar); font-size: 28px; padding: 10px 0; }
+  .teclado button[data-tecla="ok"] { background: var(--mar); color: #fff; }
+  .tremer { animation: tremer .35s; }
+  @keyframes tremer { 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+
+  .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: calc(100% - 32px); max-width: 500px; background: var(--tinta); color: #fff; border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 20; }
+  .toast button { background: var(--moeda); color: #3F2A00; padding: 8px 12px; }
+
+  .carregando { text-align: center; padding-top: 30vh; color: var(--suave); }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- Carregando -->
+<main id="tela-carregando" class="tela carregando"><p>Abrindo o cofrinho...</p></main>
+
+<!-- Entrada -->
+<main id="tela-entrar" class="tela entrar" hidden>
+  <div class="moeda logo" aria-hidden="true">R$</div>
+  <h1>Mesada</h1>
+  <p>Aprendendo a cuidar do próprio dinheiro</p>
+  <button class="btn" data-acao="google">Entrar com Google</button>
+  <details>
+    <summary>Entrar com e-mail e senha</summary>
+    <form id="f-familia" class="cartao">
+      <label>E-mail<input id="fam-email" type="email" autocomplete="username" required></label>
+      <label>Senha<input id="fam-senha" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit">Entrar</button>
+      <p class="nota">Nos aparelhos dos filhos, basta entrar uma vez. Depois o aparelho continua conectado.</p>
+    </form>
+  </details>
+</main>
+
+<!-- Filhos: escolher quem é -->
+<main id="tela-escolher" class="tela" hidden>
+  <p class="pergunta">Quem é você?</p>
+  <div id="k-escolha" class="escolha"></div>
+  <p style="text-align:center;margin-top:48px"><button class="btn-texto" data-acao="desconectar">Desconectar este aparelho</button></p>
+</main>
+
+<!-- Filhos: saldo e extrato -->
+<main id="tela-filho" class="tela" hidden>
+  <div class="barra">
+    <div id="k-ola" class="ola"></div>
+    <button class="btn-claro" data-acao="trocar">Sair</button>
+  </div>
+  <div id="k-moeda"></div>
+  <p id="k-recado" class="recado"></p>
+  <nav class="abas" role="tablist">
+    <button role="tab" data-acao="aba-filho" data-aba="tudo" aria-selected="true">Meu dinheiro</button>
+    <button role="tab" data-acao="aba-filho" data-aba="gastos" aria-selected="false">Meus gastos</button>
+  </nav>
+  <div id="k-lista"></div>
+</main>
+
+<!-- Responsável -->
+<main id="tela-resp" class="tela" hidden>
+  <div class="barra">
+    <h1>Mesada</h1>
+    <button class="btn-claro" data-acao="sair">Sair</button>
+  </div>
+  <div id="r-filhos" class="seletor"></div>
+  <div id="r-moeda"></div>
+  <div id="r-banner"></div>
+
+  <nav class="abas" role="tablist">
+    <button role="tab" data-acao="aba" data-aba="lancar" aria-selected="true">Lançar</button>
+    <button role="tab" data-acao="aba" data-aba="gastos" aria-selected="false">Gastos</button>
+    <button role="tab" data-acao="aba" data-aba="extrato" aria-selected="false">Extrato</button>
+    <button role="tab" data-acao="aba" data-aba="ajustes" aria-selected="false">Ajustes</button>
+  </nav>
+
+  <section data-painel="lancar">
+    <h2>Benefícios</h2>
+    <div id="r-benef" class="grade"></div>
+    <h2>Multas</h2>
+    <div id="r-multas" class="grade"></div>
+    <h2>Outro lançamento</h2>
+    <form id="f-livre" class="cartao">
+      <div class="tipo">
+        <label><input type="radio" name="tipo" value="beneficio" checked><span>Benefício</span></label>
+        <label><input type="radio" name="tipo" value="multa"><span>Multa</span></label>
+      </div>
+      <label>O que aconteceu<input id="livre-desc" required maxlength="80"></label>
+      <div class="dupla">
+        <label>Valor (R$)<input id="livre-valor" inputmode="decimal" placeholder="0,50" required></label>
+        <label>Data<input id="livre-data" type="date" required></label>
+      </div>
+      <button class="btn" type="submit">Lançar</button>
+    </form>
+  </section>
+
+  <section data-painel="gastos" hidden>
+    <form id="f-gasto" class="cartao">
+      <label>Em que gastou<input id="gasto-desc" required maxlength="80" placeholder="Figurinhas na banca"></label>
+      <div class="dupla">
+        <label>Valor (R$)<input id="gasto-valor" inputmode="decimal" placeholder="5,00" required></label>
+        <label>Data<input id="gasto-data" type="date" required></label>
+      </div>
+      <button class="btn" type="submit">Registrar gasto</button>
+    </form>
+    <div id="r-gastos"></div>
+  </section>
+
+  <section data-painel="extrato" hidden>
+    <div id="r-extrato"></div>
+  </section>
+
+  <section data-painel="ajustes" hidden>
+    <form id="f-perfil" class="cartao">
+      <div style="display:flex;align-items:center;gap:14px">
+        <span id="aj-avatar"></span>
+        <button type="button" class="btn-claro" data-acao="trocar-foto">Trocar foto</button>
+        <input type="file" id="aj-foto" accept="image/*" hidden>
+      </div>
+      <label>Nome<input id="aj-nome" required maxlength="30"></label>
+      <label>Mesada mensal (R$)<input id="aj-mesada" inputmode="decimal" required></label>
+      <button class="btn" type="submit">Salvar dados</button>
+    </form>
+
+    <form id="f-pin" class="cartao">
+      <label>Novo PIN (4 a 8 números)<input id="aj-pin" inputmode="numeric" pattern="[0-9]{4,8}" required autocomplete="off"></label>
+      <p id="aj-pin-status" class="nota"></p>
+      <button class="btn" type="submit">Salvar PIN</button>
+    </form>
+
+    <h2>Lista de benefícios e multas</h2>
+    <p class="nota">Vale para os dois filhos.</p>
+    <div id="r-regras" style="margin-top:8px"></div>
+    <form id="f-regra" class="cartao">
+      <div class="tipo">
+        <label><input type="radio" name="rtipo" value="beneficio" checked><span>Benefício</span></label>
+        <label><input type="radio" name="rtipo" value="multa"><span>Multa</span></label>
+      </div>
+      <label>Descrição<input id="regra-desc" required maxlength="60"></label>
+      <div class="dupla">
+        <label>Valor (R$)<input id="regra-valor" inputmode="decimal" required></label>
+        <label>Ícone (opcional)<input id="regra-icone" maxlength="4" placeholder="⭐"></label>
+      </div>
+      <button class="btn" type="submit">Adicionar à lista</button>
+    </form>
+  </section>
+</main>
+
+<!-- Teclado de PIN -->
+<div id="pin" class="sobreposicao" role="dialog" aria-modal="true" aria-labelledby="pin-titulo" hidden>
+  <div class="pin-caixa" id="pin-caixa">
+    <div id="pin-avatar"></div>
+    <h2 id="pin-titulo" style="margin-top:8px">Digite seu PIN</h2>
+    <div id="pin-pontos" class="pontos" aria-live="polite"></div>
+    <p id="pin-erro" class="erro" role="alert"></p>
+    <div class="teclado">
+      <button data-acao="tecla" data-tecla="1">1</button><button data-acao="tecla" data-tecla="2">2</button><button data-acao="tecla" data-tecla="3">3</button>
+      <button data-acao="tecla" data-tecla="4">4</button><button data-acao="tecla" data-tecla="5">5</button><button data-acao="tecla" data-tecla="6">6</button>
+      <button data-acao="tecla" data-tecla="7">7</button><button data-acao="tecla" data-tecla="8">8</button><button data-acao="tecla" data-tecla="9">9</button>
+      <button data-acao="tecla" data-tecla="apagar" aria-label="Apagar">⌫</button><button data-acao="tecla" data-tecla="0">0</button><button data-acao="tecla" data-tecla="ok" aria-label="Confirmar">✓</button>
+    </div>
+    <button class="btn-claro" data-acao="pin-fechar">Voltar</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script type="module">
+// ⚠️ Confira na documentação do Firebase se esta versão do SDK ainda é recomendada.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ================= CONFIGURAÇÃO — preencha antes de publicar ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCGyxfhHWbicQqyOgrZWBjHIyFGGYbvGGA",
+  authDomain: "mesada-filhos.firebaseapp.com",
+  projectId: "mesada-filhos",
+  storageBucket: "mesada-filhos.firebasestorage.app",
+  messagingSenderId: "824246182177",
+  appId: "1:824246182177:web:cf129608f62b7adc6ede60"
+};
+// Contas dos responsáveis (Google ou e-mail/senha, em minúsculas) — iguais às do firestore.rules
+const RESPONSAVEIS = ["pedromzengcivil@gmail.com", "annapaulapfirmo@yahoo.com"];
+// Conta de e-mail/senha usada nos aparelhos dos filhos — igual à do firestore.rules
+const EMAIL_FILHOS = "pedroemateus1729@gmail.com";
+/* ============================================================================ */
+
+// Criados automaticamente no primeiro acesso de um responsável
+const FILHOS_INICIAIS = [
+  { id: "pedro",  nome: "Pedro",  ordem: 1, mesada: 5000 },
+  { id: "mateus", nome: "Mateus", ordem: 2, mesada: 5000 }
+];
+const REGRAS_INICIAIS = [
+  { tipo: "beneficio", icone: "🛏️", valor: 50,  descricao: "Arrumar a cama ao acordar" },
+  { tipo: "beneficio", icone: "👕", valor: 50,  descricao: "Organizar roupas e calçados depois de trocar" },
+  { tipo: "beneficio", icone: "🗑️", valor: 100, descricao: "Jogar o lixo fora" },
+  { tipo: "beneficio", icone: "🚶", valor: 100, descricao: "Ir sozinho a um lugar pedido por um responsável" },
+  { tipo: "beneficio", icone: "🍽️", valor: 50,  descricao: "Organizar as vasilhas na pia depois das refeições" },
+  { tipo: "beneficio", icone: "🧸", valor: 50,  descricao: "Organizar os brinquedos depois de brincar" },
+  { tipo: "multa",     icone: "🛏️", valor: 50,  descricao: "Não arrumar a cama ao acordar" },
+  { tipo: "multa",     icone: "👟", valor: 50,  descricao: "Deixar roupas ou calçados jogados pela casa" },
+  { tipo: "multa",     icone: "😠", valor: 200, descricao: "Brigar com o irmão" },
+  { tipo: "multa",     icone: "🙉", valor: 500, descricao: "Xingar ou desobedecer um responsável" },
+  { tipo: "multa",     icone: "🧸", valor: 50,  descricao: "Deixar os brinquedos desorganizados" }
+];
+
+const SINAL  = { mesada: 1, beneficio: 1, multa: -1, gasto: -1 };
+const ICONE  = { mesada: "💰", beneficio: "⭐", multa: "⚠️", gasto: "🛒" };
+const ROTULO = { mesada: "Mesada", beneficio: "Benefício", multa: "Multa", gasto: "Gasto" };
+const MESES  = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ---------- estado ---------- */
+let usuario = null, papel = null, tela = "carregando";
+let filhos = [], regras = [], lancs = [], lancsProntos = false;
+let filhoAtual = null, unsubs = [], unsubLancs = null;
+let abaResp = "lancar", abaFilho = "tudo";
+let pinFilho = null, pinDigitado = "";
+
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const brl = c => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const mesDe = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+const nomeMes = m => { const [a, mm] = m.split("-"); const n = MESES[+mm - 1]; return n[0].toUpperCase() + n.slice(1) + " de " + a; };
+const dataCurta = d => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const deISO = s => { const [a, m, d] = s.split("-").map(Number); return new Date(a, m - 1, d, 12); };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+function paraCentavos(txt) {
+  let s = String(txt).trim().replace(/\s|R\$/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+}
+
+async function hashPin(filhoId, pin) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`mesada:${filhoId}:${pin}`));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function avatar(f, tam) {
+  const st = `width:${tam}px;height:${tam}px;font-size:${Math.round(tam * .42)}px`;
+  return f?.foto
+    ? `<img class="avatar" src="${f.foto}" alt="" style="${st}">`
+    : `<span class="avatar" aria-hidden="true" style="${st}">${esc((f?.nome || "?")[0])}</span>`;
+}
+
+function reduzirFoto(file) {
+  return new Promise((ok, falhou) => {
+    const img = new Image();
+    img.onload = () => {
+      const lado = 320, c = document.createElement("canvas");
+      c.width = c.height = lado;
+      const m = Math.min(img.width, img.height);
+      c.getContext("2d").drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, lado, lado);
+      URL.revokeObjectURL(img.src);
+      ok(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => falhou(new Error("Não foi possível ler essa imagem."));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+let toastTimer;
+function toast(msg, desfazer) {
+  const t = $("#toast");
+  t.innerHTML = `<span>${esc(msg)}</span>` + (desfazer ? `<button type="button">Desfazer</button>` : "");
+  t.hidden = false;
+  if (desfazer) t.querySelector("button").onclick = async () => {
+    t.hidden = true;
+    try { await desfazer(); toast("Lançamento desfeito."); } catch (e) { falha(e); }
+  };
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.hidden = true), desfazer ? 6000 : 3000);
+}
+function falha(e) {
+  console.error(e);
+  const cod = e?.code || "";
+  if (cod.includes("permission-denied")) toast("Sem permissão. Confira as regras do Firestore e os e-mails configurados.");
+  else if (cod.includes("wrong-password") || cod.includes("invalid-credential")) toast("E-mail ou senha incorretos.");
+  else if (cod.includes("popup")) toast("A janela de login foi fechada ou bloqueada. Tente de novo.");
+  else toast(e?.message || "Algo deu errado. Tente de novo.");
+}
+
+/* ---------- dados ---------- */
+function limpar() {
+  unsubs.forEach(u => u()); unsubs = [];
+  if (unsubLancs) unsubLancs(); unsubLancs = null;
+  filhos = []; regras = []; lancs = []; lancsProntos = false; filhoAtual = null;
+}
+
+function assinarBase(depois) {
+  unsubs.push(onSnapshot(query(collection(db, "filhos"), orderBy("ordem")), s => {
+    filhos = s.docs.map(d => ({ id: d.id, ...d.data() }));
+    depois();
+  }, falha));
+  unsubs.push(onSnapshot(query(collection(db, "regras"), orderBy("ordem")), s => {
+    regras = s.docs.map(d => ({ id: d.id, ...d.data() }));
+    depois();
+  }, falha));
+}
+
+function assinarLancs(id, depois) {
+  if (unsubLancs) unsubLancs();
+  lancs = []; lancsProntos = false;
+  unsubLancs = onSnapshot(query(collection(db, "filhos", id, "lancamentos"), orderBy("data", "desc")), s => {
+    lancs = s.docs.map(d => {
+      const x = d.data();
+      return { id: d.id, ...x, data: x.data?.toDate ? x.data.toDate() : new Date() };
+    });
+    lancsProntos = true;
+    depois();
+  }, falha);
+}
+
+const saldo = () => lancs.reduce((s, l) => s + (SINAL[l.tipo] || 0) * l.valor, 0);
+const filhoSel = () => filhos.find(f => f.id === filhoAtual);
+
+// Grava sem esperar o servidor, para a tela responder na hora (funciona até sem internet momentânea)
+function lancar({ tipo, descricao, valor, data = new Date(), icone = null, id = null }) {
+  const col = collection(db, "filhos", filhoAtual, "lancamentos");
+  const ref = id ? doc(col, id) : doc(col);
+  const dados = { tipo, descricao, valor, data: Timestamp.fromDate(data), mes: mesDe(data), criadoPor: usuario.email, criadoEm: serverTimestamp() };
+  if (icone) dados.icone = icone;
+  setDoc(ref, dados).catch(falha);
+  return ref;
+}
+
+/* ---------- desenho das telas ---------- */
+function mostrar() {
+  document.querySelectorAll(".tela").forEach(t => (t.hidden = t.id !== "tela-" + tela));
+}
+function render() {
+  mostrar();
+  if (tela === "escolher") renderEscolher();
+  else if (tela === "filho") renderFilho();
+  else if (tela === "resp") renderResp();
+}
+
+function htmlMoeda(v) {
+  return `<div class="moeda ${v < 0 ? "negativa" : ""}" role="img" aria-label="Saldo ${brl(v)}">
+    <span>${v < 0 ? "Devendo" : "Saldo"}</span><strong>${brl(v)}</strong></div>`;
+}
+
+function htmlItem(l, apagar) {
+  const s = SINAL[l.tipo];
+  const cls = l.tipo === "gasto" ? "gst" : (s > 0 ? "pos" : "neg");
+  return `<div class="item">
+    <span class="ic ic-${l.tipo}" aria-hidden="true">${esc(l.icone || ICONE[l.tipo])}</span>
+    <div class="txt">${esc(l.descricao)}<small>${ROTULO[l.tipo]} em ${dataCurta(l.data)}</small></div>
+    <span class="val ${cls}">${s > 0 ? "+" : "−"} ${brl(l.valor)}</span>
+    ${apagar ? `<button class="apagar" data-acao="apagar" data-id="${l.id}" aria-label="Apagar ${esc(l.descricao)}">✕</button>` : ""}
+  </div>`;
+}
+
+function htmlExtrato(lista, apagar, vazio) {
+  if (!lancsProntos) return `<p class="vazio">Carregando...</p>`;
+  if (!lista.length) return `<p class="vazio">${vazio}</p>`;
+  const grupos = {};
+  lista.forEach(l => (grupos[l.mes] ||= []).push(l));
+  return Object.keys(grupos).sort().reverse().map(m => {
+    const it = grupos[m];
+    const soma = (...t) => it.filter(i => t.includes(i.tipo)).reduce((s, i) => s + i.valor, 0);
+    const ganhou = soma("mesada", "beneficio"), multas = soma("multa"), gastou = soma("gasto");
+    const chips = [
+      ganhou ? `<span class="chip c-pos">Ganhou ${brl(ganhou)}</span>` : "",
+      multas ? `<span class="chip c-neg">Multas ${brl(multas)}</span>` : "",
+      gastou ? `<span class="chip c-gasto">Gastou ${brl(gastou)}</span>` : ""
+    ].join("");
+    return `<section class="mes"><h3>${nomeMes(m)}</h3><div class="mes-resumo">${chips}</div>${it.map(l => htmlItem(l, apagar)).join("")}</section>`;
+  }).join("");
+}
+
+function renderEscolher() {
+  $("#k-escolha").innerHTML = filhos.map(f =>
+    `<button data-acao="escolher" data-id="${f.id}">${avatar(f, 120)}<span>${esc(f.nome)}</span></button>`).join("");
+}
+
+function renderFilho() {
+  const f = filhoSel(); if (!f) return;
+  const v = saldo();
+  $("#k-ola").innerHTML = `${avatar(f, 52)}<strong>Oi, ${esc(f.nome)}!</strong>`;
+  $("#k-moeda").innerHTML = htmlMoeda(v);
+  const rec = $("#k-recado");
+  rec.className = "recado" + (v < 0 ? " neg" : "");
+  rec.textContent = !lancsProntos ? "" : v < 0
+    ? `Você está devendo ${brl(-v)}. Essa dívida sai da próxima mesada.`
+    : "Este é o dinheiro que você tem guardado.";
+  document.querySelectorAll('[data-acao="aba-filho"]').forEach(b => b.setAttribute("aria-selected", b.dataset.aba === abaFilho));
+  $("#k-lista").innerHTML = abaFilho === "gastos"
+    ? htmlExtrato(lancs.filter(l => l.tipo === "gasto"), false, "Você ainda não gastou nada.")
+    : htmlExtrato(lancs, false, "Ainda não tem nada aqui.");
+}
+
+function renderResp() {
+  const f = filhoSel();
+  $("#r-filhos").innerHTML = filhos.map(x =>
+    `<button data-acao="filho" data-id="${x.id}" aria-pressed="${x.id === filhoAtual}">${avatar(x, 64)}<span>${esc(x.nome)}</span></button>`).join("");
+  if (!f) return;
+
+  $("#r-moeda").innerHTML = htmlMoeda(saldo());
+
+  const agora = new Date(), idM = "mesada-" + mesDe(agora);
+  $("#r-banner").innerHTML = (!lancsProntos || lancs.some(l => l.id === idM)) ? "" :
+    `<div class="banner"><span>A mesada de ${MESES[agora.getMonth()]} de ${esc(f.nome)} ainda não foi lançada.</span>
+     <button class="btn" data-acao="mesada">Lançar ${brl(f.mesada)}</button></div>`;
+
+  const botao = r => `<button class="regra ${r.tipo}" data-acao="regra" data-id="${r.id}">
+      <span class="ic" aria-hidden="true">${esc(r.icone || ICONE[r.tipo])}</span>${esc(r.descricao)}
+      <b>${r.tipo === "beneficio" ? "+" : "−"} ${brl(r.valor)}</b></button>`;
+  $("#r-benef").innerHTML  = regras.filter(r => r.tipo === "beneficio").map(botao).join("") || `<p class="nota">Nenhum benefício na lista.</p>`;
+  $("#r-multas").innerHTML = regras.filter(r => r.tipo === "multa").map(botao).join("")     || `<p class="nota">Nenhuma multa na lista.</p>`;
+
+  $("#r-gastos").innerHTML  = htmlExtrato(lancs.filter(l => l.tipo === "gasto"), true, `Nenhum gasto registrado para ${esc(f.nome)}.`);
+  $("#r-extrato").innerHTML = htmlExtrato(lancs, true, `Nenhum lançamento para ${esc(f.nome)}. Comece lançando a mesada.`);
+
+  $("#r-regras").innerHTML = regras.map(r => `<div class="item">
+      <span class="ic ic-${r.tipo}" aria-hidden="true">${esc(r.icone || ICONE[r.tipo])}</span>
+      <div class="txt">${esc(r.descricao)}<small>${ROTULO[r.tipo]}</small></div>
+      <span class="val ${r.tipo === "beneficio" ? "pos" : "neg"}">${r.tipo === "beneficio" ? "+" : "−"} ${brl(r.valor)}</span>
+      <button class="apagar" data-acao="apagar-regra" data-id="${r.id}" aria-label="Remover ${esc(r.descricao)}">✕</button></div>`).join("");
+
+  $("#aj-avatar").innerHTML = avatar(f, 72);
+  $("#aj-pin-status").textContent = f.pinHash ? "PIN já definido. Salvar outro substitui o atual." : `${f.nome} ainda não tem PIN e não consegue entrar no app.`;
+
+  document.querySelectorAll('[data-acao="aba"]').forEach(b => b.setAttribute("aria-selected", b.dataset.aba === abaResp));
+  document.querySelectorAll("[data-painel]").forEach(p => (p.hidden = p.dataset.painel !== abaResp));
+}
+
+function preencherAjustes() {
+  const f = filhoSel(); if (!f) return;
+  $("#aj-nome").value = f.nome || "";
+  $("#aj-mesada").value = ((f.mesada || 0) / 100).toFixed(2).replace(".", ",");
+}
+
+function selecionarFilho(id) {
+  filhoAtual = id;
+  assinarLancs(id, render);
+  preencherAjustes();
+  render();
+}
+
+/* ---------- início de sessão ---------- */
+async function iniciarResp() {
+  tela = "carregando"; mostrar();
+  const s = await getDocs(collection(db, "filhos"));
+  if (s.empty) {
+    const b = writeBatch(db);
+    FILHOS_INICIAIS.forEach(f => b.set(doc(db, "filhos", f.id), { nome: f.nome, ordem: f.ordem, mesada: f.mesada }));
+    REGRAS_INICIAIS.forEach((r, i) => b.set(doc(collection(db, "regras")), { ...r, ordem: i }));
+    await b.commit();
+  }
+  tela = "resp";
+  assinarBase(() => {
+    if (!filhoAtual && filhos.length) selecionarFilho(filhos[0].id);
+    else render();
+  });
+  render();
+}
+
+function iniciarFamilia() {
+  tela = "escolher";
+  assinarBase(render);
+  render();
+}
+
+onAuthStateChanged(auth, async u => {
+  limpar();
+  usuario = u;
+  if (!u) { tela = "entrar"; mostrar(); return; }
+  const email = (u.email || "").toLowerCase();
+  try {
+    if (RESPONSAVEIS.map(e => e.toLowerCase()).includes(email)) { papel = "resp"; await iniciarResp(); }
+    else if (email === EMAIL_FILHOS.toLowerCase()) { papel = "familia"; iniciarFamilia(); }
+    else { toast(`A conta ${email} não tem acesso a este app.`); await signOut(auth); }
+  } catch (e) { falha(e); }
+});
+
+/* ---------- PIN ---------- */
+function abrirPin(f) {
+  pinFilho = f; pinDigitado = "";
+  $("#pin-avatar").innerHTML = avatar(f, 80);
+  $("#pin-titulo").textContent = `${f.nome}, digite seu PIN`;
+  $("#pin-erro").textContent = f.pinHash ? "" : "Seu PIN ainda não foi criado. Peça a um responsável.";
+  atualizarPontos();
+  $("#pin").hidden = false;
+}
+function atualizarPontos() {
+  $("#pin-pontos").textContent = pinDigitado ? "●".repeat(pinDigitado.length) : "○○○○";
+}
+async function teclaPin(t) {
+  if (t === "apagar") pinDigitado = pinDigitado.slice(0, -1);
+  else if (t === "ok") {
+    if (!pinFilho.pinHash) return;
+    if (await hashPin(pinFilho.id, pinDigitado) === pinFilho.pinHash) {
+      $("#pin").hidden = true;
+      filhoAtual = pinFilho.id; abaFilho = "tudo"; tela = "filho";
+      assinarLancs(filhoAtual, render);
+      render();
+      return;
+    }
+    pinDigitado = "";
+    $("#pin-erro").textContent = "PIN errado. Tente de novo.";
+    const cx = $("#pin-caixa"); cx.classList.remove("tremer"); void cx.offsetWidth; cx.classList.add("tremer");
+  } else if (pinDigitado.length < 8) {
+    pinDigitado += t;
+    if (pinFilho.pinHash) $("#pin-erro").textContent = "";
+  }
+  atualizarPontos();
+}
+
+/* ---------- cliques ---------- */
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-acao]"); if (!b) return;
+  const id = b.dataset.id;
+  try {
+    switch (b.dataset.acao) {
+      case "google": await signInWithPopup(auth, new GoogleAuthProvider()); break;
+      case "sair": await signOut(auth); break;
+      case "desconectar": if (confirm("Desconectar este aparelho? Será preciso digitar o e-mail e a senha de novo.")) await signOut(auth); break;
+
+      case "escolher": abrirPin(filhos.find(f => f.id === id)); break;
+      case "tecla": await teclaPin(b.dataset.tecla); break;
+      case "pin-fechar": $("#pin").hidden = true; break;
+      case "trocar":
+        if (unsubLancs) unsubLancs(); unsubLancs = null;
+        filhoAtual = null; lancs = []; lancsProntos = false; tela = "escolher"; render(); break;
+      case "aba-filho": abaFilho = b.dataset.aba; render(); break;
+
+      case "filho": if (id !== filhoAtual) selecionarFilho(id); break;
+      case "aba": abaResp = b.dataset.aba; if (abaResp === "ajustes") preencherAjustes(); render(); break;
+
+      case "regra": {
+        const r = regras.find(x => x.id === id); if (!r) break;
+        const ref = lancar({ tipo: r.tipo, descricao: r.descricao, valor: r.valor, icone: r.icone });
+        toast(`${r.tipo === "beneficio" ? "+" : "−"} ${brl(r.valor)} para ${filhoSel().nome}`, () => deleteDoc(ref));
+        break;
+      }
+      case "mesada": {
+        const f = filhoSel(), agora = new Date();
+        const ref = lancar({ tipo: "mesada", descricao: `Mesada de ${MESES[agora.getMonth()]}`, valor: f.mesada,
+          data: new Date(agora.getFullYear(), agora.getMonth(), 1, 12), id: "mesada-" + mesDe(agora) });
+        toast(`Mesada de ${brl(f.mesada)} lançada para ${f.nome}.`, () => deleteDoc(ref));
+        break;
+      }
+      case "apagar":
+        if (confirm("Apagar este lançamento?")) await deleteDoc(doc(db, "filhos", filhoAtual, "lancamentos", id));
+        break;
+      case "apagar-regra":
+        if (confirm("Remover este item da lista? Os lançamentos já feitos continuam no extrato.")) await deleteDoc(doc(db, "regras", id));
+        break;
+      case "trocar-foto": $("#aj-foto").click(); break;
+    }
+  } catch (err) { falha(err); }
+});
+
+/* ---------- formulários ---------- */
+$("#f-familia").addEventListener("submit", async e => {
+  e.preventDefault();
+  try { await signInWithEmailAndPassword(auth, $("#fam-email").value.trim(), $("#fam-senha").value); }
+  catch (err) { falha(err); }
+});
+
+$("#f-livre").addEventListener("submit", e => {
+  e.preventDefault();
+  const tipo = e.target.querySelector('input[name="tipo"]:checked').value;
+  const valor = paraCentavos($("#livre-valor").value);
+  if (!valor) return toast("Digite um valor válido, por exemplo 0,50.");
+  const ref = lancar({ tipo, descricao: $("#livre-desc").value.trim(), valor, data: deISO($("#livre-data").value) });
+  toast(`${tipo === "beneficio" ? "+" : "−"} ${brl(valor)} para ${filhoSel().nome}`, () => deleteDoc(ref));
+  $("#livre-desc").value = ""; $("#livre-valor").value = ""; $("#livre-data").value = hojeISO();
+});
+
+$("#f-gasto").addEventListener("submit", e => {
+  e.preventDefault();
+  const valor = paraCentavos($("#gasto-valor").value);
+  if (!valor) return toast("Digite um valor válido, por exemplo 5,00.");
+  const ref = lancar({ tipo: "gasto", descricao: $("#gasto-desc").value.trim(), valor, data: deISO($("#gasto-data").value) });
+  toast(`Gasto de ${brl(valor)} registrado para ${filhoSel().nome}.`, () => deleteDoc(ref));
+  $("#gasto-desc").value = ""; $("#gasto-valor").value = ""; $("#gasto-data").value = hojeISO();
+});
+
+$("#f-perfil").addEventListener("submit", async e => {
+  e.preventDefault();
+  const mesada = paraCentavos($("#aj-mesada").value);
+  if (!mesada) return toast("Digite um valor de mesada válido, por exemplo 50,00.");
+  try {
+    await updateDoc(doc(db, "filhos", filhoAtual), { nome: $("#aj-nome").value.trim(), mesada });
+    toast("Dados salvos.");
+  } catch (err) { falha(err); }
+});
+
+$("#f-pin").addEventListener("submit", async e => {
+  e.preventDefault();
+  const pin = $("#aj-pin").value.trim();
+  if (!/^\d{4,8}$/.test(pin)) return toast("O PIN precisa ter de 4 a 8 números.");
+  try {
+    await updateDoc(doc(db, "filhos", filhoAtual), { pinHash: await hashPin(filhoAtual, pin) });
+    $("#aj-pin").value = "";
+    toast("PIN salvo.");
+  } catch (err) { falha(err); }
+});
+
+$("#aj-foto").addEventListener("change", async e => {
+  const arq = e.target.files[0]; e.target.value = "";
+  if (!arq) return;
+  try {
+    const foto = await reduzirFoto(arq);
+    await updateDoc(doc(db, "filhos", filhoAtual), { foto });
+    toast("Foto atualizada.");
+  } catch (err) { falha(err); }
+});
+
+$("#f-regra").addEventListener("submit", e => {
+  e.preventDefault();
+  const tipo = e.target.querySelector('input[name="rtipo"]:checked').value;
+  const valor = paraCentavos($("#regra-valor").value);
+  if (!valor) return toast("Digite um valor válido, por exemplo 0,50.");
+  const icone = $("#regra-icone").value.trim() || ICONE[tipo];
+  setDoc(doc(collection(db, "regras")), { tipo, descricao: $("#regra-desc").value.trim(), valor, icone, ordem: Date.now() }).catch(falha);
+  toast("Item adicionado à lista.");
+  e.target.reset();
+});
+
+$("#livre-data").value = hojeISO();
+$("#gasto-data").value = hojeISO();
+</script>
+</body>
+</html>
